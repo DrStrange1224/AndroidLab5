@@ -2,7 +2,6 @@ package ru.android.origlab5.ui
 
 import ru.android.origlab5.data.FlightData
 import ru.android.origlab5.data.entity.AirportEntity
-import ru.android.origlab5.data.entity.FavoriteEntity
 
 data class MainUiState (
     val selectedAirport : AirportEntity? = null,

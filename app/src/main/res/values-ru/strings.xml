@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">origlab5</string>
+    <string name="depart_flight_text">Отбытие</string>
+    <string name="arrive_flight_text">Прибытие</string>
+    <string name="no_favorites_text">У вас нет избранных рейсов</string>
+</resources>

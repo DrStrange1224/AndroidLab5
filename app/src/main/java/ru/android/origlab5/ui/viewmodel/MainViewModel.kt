@@ -1,17 +1,15 @@
 package ru.android.origlab5.ui.viewmodel
 
 import android.util.Log
-import androidx.compose.animation.core.snap
-import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.filter
@@ -19,18 +17,14 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import ru.android.origlab5.data.FlightData
 import ru.android.origlab5.data.entity.AirportEntity
-import ru.android.origlab5.data.entity.FavoriteEntity
 import ru.android.origlab5.data.repository.FlightRepository
 import ru.android.origlab5.ui.MainUiState
-import java.util.logging.Logger
-
-@OptIn(FlowPreview::class)
+@OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
 class MainViewModel(private val flightRepository: FlightRepository) : ViewModel() {
     private val _searchQuery = MutableStateFlow("")
     val searchQuery : StateFlow<String> = _searchQuery.asStateFlow()
@@ -126,9 +120,6 @@ class MainViewModel(private val flightRepository: FlightRepository) : ViewModel(
         Log.w("MYLOGGER", "ViewModel initializing finished")
     }
 
-    /**
-     * Launches every time [searchQuery] changes
-     */
     private fun loadSuggestions(query : String){
         viewModelScope.launch {
             _uiState.update {
@@ -152,9 +143,6 @@ class MainViewModel(private val flightRepository: FlightRepository) : ViewModel(
         }
     }
 
-    /**
-     * Launching when search query changes, if query is empty, clears fields of [uiState]
-     */
     fun onSearchQueryChange(query : String){
         _searchQuery.value = query
         Log.w("MYLOGGER", "onSearchQueryChange run, current query = $query")
@@ -204,9 +192,6 @@ class MainViewModel(private val flightRepository: FlightRepository) : ViewModel(
         }
     }
 
-    /**
-     * Toggles favorite of flight from selectedAirport to [fav]
-     */
     fun toggleFavorite(fav : FlightData){
         viewModelScope.launch {
             if (flightRepository.isFlightFavorite(fav.departure, fav.destination)!!){
@@ -218,6 +203,7 @@ class MainViewModel(private val flightRepository: FlightRepository) : ViewModel(
     }
 
     class Factory(private val flightRepository: FlightRepository) : ViewModelProvider.Factory{
+        @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             return MainViewModel(flightRepository) as T
         }

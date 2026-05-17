@@ -21,32 +21,27 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.lifecycle.ViewModel
 import ru.android.origlab5.ui.viewmodel.MainViewModel
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
-import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.ModifierLocalBeyondBoundsLayout
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import ru.android.origlab5.R
 import ru.android.origlab5.data.entity.AirportEntity
-import ru.android.origlab5.data.entity.FavoriteEntity
 
 @Composable
 fun MainScreen(viewModel : MainViewModel, modifier : Modifier) {
@@ -59,7 +54,6 @@ fun MainScreen(viewModel : MainViewModel, modifier : Modifier) {
             .fillMaxSize()
             .padding(33.dp)
     ){
-        //INPUT TEXT FIELD
         TextField(
             value = searchQuery,
             onValueChange = { viewModel.onSearchQueryChange(it) },
@@ -71,9 +65,7 @@ fun MainScreen(viewModel : MainViewModel, modifier : Modifier) {
             modifier = Modifier.fillMaxWidth()
         )
 
-        //MAIN CONTENT
         when{
-            //DATA LOADING
             uiState.isLoading -> {
                 Log.w("MYLOGGER", "Current state: LOADING")
                 Box(
@@ -84,7 +76,6 @@ fun MainScreen(viewModel : MainViewModel, modifier : Modifier) {
                 }
             }
 
-            //ERROR MESSAGE
             uiState.errorMessage != null -> {
                 Log.w("MYLOGGER", "Current state: ERROR")
                 Box(
@@ -98,7 +89,6 @@ fun MainScreen(viewModel : MainViewModel, modifier : Modifier) {
                 }
             }
 
-            //SUGGESTIONS
             uiState.isShowingSuggestions -> {
                 Log.w("MYLOGGER", "Current state: SUGGESTIONS")
                 LazyColumn(
@@ -117,12 +107,9 @@ fun MainScreen(viewModel : MainViewModel, modifier : Modifier) {
                 }
             }
 
-            //WHEN AIRPORT SELECTED FROM SUGGESTIONS
             uiState.selectedAirport != null -> {
                 Log.w("MYLOGGER", "Current state: SELECTED AIRPORT")
-                LazyColumn(
-
-                ) {
+                LazyColumn {
                     items(uiState.foundFlights){ flight ->
                         Log.w("MYLOGGER", "Going through foundFlights, current = $flight")
                         FlightBlock(
@@ -139,12 +126,9 @@ fun MainScreen(viewModel : MainViewModel, modifier : Modifier) {
                 }
             }
 
-            //FAVORITES
             uiState.favoriteFlights.isNotEmpty() -> {
                 Log.w("MYLOGGER", "Current state: FAVORITES")
-                LazyColumn(
-
-                ) {
+                LazyColumn {
                     items(uiState.favoriteFlights){ fav ->
                         FlightBlock(
                             departure = fav.departure,
@@ -167,7 +151,7 @@ fun MainScreen(viewModel : MainViewModel, modifier : Modifier) {
                         .fillMaxWidth()
                 ){
                     Text(
-                        "У вас нет избранных полетов" //TODO clear hardcode
+                        stringResource(R.string.no_favorites_text)
                     )
                 }
             }
@@ -190,14 +174,13 @@ fun FlightBlock(
             .fillMaxWidth()
             .padding(10.dp)
     ){
-        //TEXT COLUMN
         Column(
             modifier = Modifier
                 .fillMaxHeight()
                 .weight(3f)
         ){
             Text(
-                "depart" //TODO clear hardcode
+                stringResource(R.string.depart_flight_text)
             )
             Row(
                 horizontalArrangement = Arrangement.SpaceBetween
@@ -214,7 +197,7 @@ fun FlightBlock(
             }
 
             Text(
-                "arrive" //TODO clear hardcode
+                stringResource(R.string.arrive_flight_text)
             )
             Row(
                 horizontalArrangement = Arrangement.SpaceBetween
@@ -231,7 +214,6 @@ fun FlightBlock(
             }
         }
 
-        //FAVORITE BUTTON
         IconButton(
             modifier = Modifier
                 .fillMaxHeight()
