@@ -24,6 +24,9 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.lifecycle.ViewModel
 import ru.android.origlab5.ui.viewmodel.MainViewModel
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -33,6 +36,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ModifierLocalBeyondBoundsLayout
@@ -179,7 +183,7 @@ fun FlightBlock(
     onFavoriteToggle : () -> Unit
 ){
     Log.w("MYLOGGER", "Creating flight block")
-    val fav by remember { mutableStateOf(isFavorite) }
+    var fav by remember { mutableStateOf(isFavorite) }
     Row(
         modifier = Modifier
             .background(MaterialTheme.colorScheme.onPrimary)
@@ -193,7 +197,7 @@ fun FlightBlock(
                 .weight(3f)
         ){
             Text(
-                "depart"
+                "depart" //TODO clear hardcode
             )
             Row(
                 horizontalArrangement = Arrangement.SpaceBetween
@@ -210,7 +214,7 @@ fun FlightBlock(
             }
 
             Text(
-                "arrive"
+                "arrive" //TODO clear hardcode
             )
             Row(
                 horizontalArrangement = Arrangement.SpaceBetween
@@ -232,10 +236,13 @@ fun FlightBlock(
             modifier = Modifier
                 .fillMaxHeight()
                 .weight(1f),
-            onClick = onFavoriteToggle
+            onClick = {
+                fav = !fav
+                onFavoriteToggle()
+            }
         ){
             Icon(
-                painter = painterResource(R.drawable.star),
+                imageVector = if (fav) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                 contentDescription = null,
                 modifier = Modifier
                     .fillMaxSize()

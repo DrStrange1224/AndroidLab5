@@ -11,6 +11,7 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.filter
@@ -39,6 +40,15 @@ class MainViewModel(private val flightRepository: FlightRepository) : ViewModel(
 
     init{
         Log.w("MYLOGGER", "ViewModel initializing started")
+
+        viewModelScope.launch {
+            flightRepository.lastSearchQuery.collect { savedQuery ->
+                if (!savedQuery.isNullOrBlank()) {
+                    _searchQuery.value = savedQuery
+                    selectSuggestion(flightRepository.getAirportByIata(savedQuery)!!)
+                }
+            }
+        }
 
         viewModelScope.launch {
             Log.w("MYLOGGER", "launched at 1 scope!")
@@ -158,13 +168,14 @@ class MainViewModel(private val flightRepository: FlightRepository) : ViewModel(
                         isShowingSuggestions = false,
                     )
                 }
+                flightRepository.clearLastSearchQuery()
             }
         }
     }
 
     fun removeFavorite(fav : FlightData){
         viewModelScope.launch {
-            //TODO have to remove favorite from db
+            flightRepository.removeFavoriteFlight(fav.departure, fav.destination)
         }
     }
 
@@ -173,12 +184,23 @@ class MainViewModel(private val flightRepository: FlightRepository) : ViewModel(
             Log.w("MYLOGGER", "Airport selected! current = $airport")
             _uiState.update {
                 it.copy(
+                    isLoading = true
+                )
+            }
+            _uiState.update {
+                it.copy(
                     selectedAirport = airport,
                     isShowingSuggestions = false,
-                    suggestions = emptyList()
+                    suggestions = emptyList(),
                 )
             }
             _searchQuery.value = airport.iataCode
+            flightRepository.saveLastSearchQuery(airport.iataCode)
+            _uiState.update {
+                it.copy(
+                    isLoading = false
+                )
+            }
         }
     }
 
@@ -186,12 +208,12 @@ class MainViewModel(private val flightRepository: FlightRepository) : ViewModel(
      * Toggles favorite of flight from selectedAirport to [fav]
      */
     fun toggleFavorite(fav : FlightData){
-
-    }
-
-    fun getAirportByIata(iataCode : String){
         viewModelScope.launch {
-            flightRepository.getAirportByIata(iataCode)
+            if (flightRepository.isFlightFavorite(fav.departure, fav.destination)!!){
+                flightRepository.removeFavoriteFlight(fav.departure, fav.destination)
+            }else{
+                flightRepository.addFavoriteFlight(fav.departure, fav.destination)
+            }
         }
     }
 

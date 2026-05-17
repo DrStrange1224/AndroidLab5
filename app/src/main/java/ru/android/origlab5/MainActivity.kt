@@ -11,6 +11,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import ru.android.origlab5.data.AppDatabase
+import ru.android.origlab5.data.PreferencesManager
 import ru.android.origlab5.data.repository.FlightRepository
 import ru.android.origlab5.ui.screen.MainScreen
 import ru.android.origlab5.ui.theme.Origlab5Theme
@@ -22,9 +23,11 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         val db : AppDatabase = AppDatabase.getInstance(this)
+        val pref = PreferencesManager(this)
         val repository = FlightRepository(
             db.airportDao(),
-            db.favoriteDao()
+            db.favoriteDao(),
+            pref
         )
 
         setContent {
