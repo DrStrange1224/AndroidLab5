@@ -7,41 +7,42 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.viewmodel.compose.viewModel
+import ru.android.origlab5.data.AppDatabase
+import ru.android.origlab5.data.PreferencesManager
+import ru.android.origlab5.data.repository.FlightRepository
+import ru.android.origlab5.ui.screen.MainScreen
 import ru.android.origlab5.ui.theme.Origlab5Theme
+import ru.android.origlab5.ui.viewmodel.MainViewModel
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        val db : AppDatabase = AppDatabase.getInstance(this)
+        val pref = PreferencesManager(this)
+        val repository = FlightRepository(
+            db.airportDao(),
+            db.favoriteDao(),
+            pref
+        )
+
         setContent {
             Origlab5Theme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
+                Scaffold(
+                    modifier=Modifier.fillMaxSize()
+                ) { innerPadding ->
+                    val viewModel : MainViewModel = viewModel(
+                        factory = MainViewModel.Factory(repository)
+                    )
+                    MainScreen(
+                        viewModel,
+                        Modifier.padding(innerPadding)
                     )
                 }
             }
         }
-    }
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    Origlab5Theme {
-        Greeting("Android")
     }
 }
