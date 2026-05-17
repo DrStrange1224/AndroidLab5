@@ -5,6 +5,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -27,13 +29,16 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             Origlab5Theme {
-                Surface(
+                Scaffold(
                     modifier=Modifier.fillMaxSize()
-                ) {
+                ) { innerPadding ->
                     val viewModel : MainViewModel = viewModel(
                         factory = MainViewModel.Factory(repository)
                     )
-                    MainScreen(viewModel)
+                    MainScreen(
+                        viewModel,
+                        Modifier.padding(innerPadding)
+                    )
                 }
             }
         }

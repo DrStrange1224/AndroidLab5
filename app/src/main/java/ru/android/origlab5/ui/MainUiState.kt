@@ -6,7 +6,7 @@ import ru.android.origlab5.data.entity.FavoriteEntity
 
 data class MainUiState (
     val selectedAirport : AirportEntity? = null,
-    val foundDestinations : List<AirportEntity> = emptyList(),
+    val foundFlights : List<FlightData> = emptyList(),
     val suggestions : List<AirportEntity> = emptyList(),
     val isShowingSuggestions : Boolean = false,
     val isLoading : Boolean = false,

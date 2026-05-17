@@ -25,7 +25,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "flights.db"
                 )
-                    .createFromAsset("databases/flights.db")
+                    .createFromAsset("database/flight_search.db")
                     .build()
                     .also { INSTANCE = it }
             }

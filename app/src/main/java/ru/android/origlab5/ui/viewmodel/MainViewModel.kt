@@ -1,9 +1,12 @@
 package ru.android.origlab5.ui.viewmodel
 
+import android.util.Log
+import androidx.compose.animation.core.snap
 import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -15,13 +18,16 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import ru.android.origlab5.data.FlightData
 import ru.android.origlab5.data.entity.AirportEntity
 import ru.android.origlab5.data.entity.FavoriteEntity
 import ru.android.origlab5.data.repository.FlightRepository
 import ru.android.origlab5.ui.MainUiState
+import java.util.logging.Logger
 
 @OptIn(FlowPreview::class)
 class MainViewModel(private val flightRepository: FlightRepository) : ViewModel() {
@@ -32,44 +38,71 @@ class MainViewModel(private val flightRepository: FlightRepository) : ViewModel(
     val uiState : StateFlow<MainUiState> = _uiState.asStateFlow()
 
     init{
-        //LAUNCHES EVERY TIME [_searchQuery] CHANGES
+        Log.w("MYLOGGER", "ViewModel initializing started")
+
         viewModelScope.launch {
+            Log.w("MYLOGGER", "launched at 1 scope!")
+
+            //LAUNCHES EVERY TIME [_searchQuery] CHANGES
             _searchQuery
                 .debounce(300)
-                .filter { it.isNotBlank() && _uiState.value.selectedAirport?.iataCode != null }
+                .filter { it.isNotBlank() && _uiState.value.selectedAirport?.iataCode == null }
                 .collectLatest { query ->
+                    Log.w("MYLOGGER", "_searchQuery MutableStateFlow worked!")
                     loadSuggestions(query)
                 }
         }
 
-        //UPDATING DESTINATIONS EVERY TIME [_uiState.selectedAirport] CHANGES
         viewModelScope.launch {
-            snapshotFlow { _uiState.value.selectedAirport }
+            Log.w("MYLOGGER", "launched at 2 scope!")
+
+            //UPDATING DESTINATIONS EVERY TIME [_uiState.selectedAirport] CHANGES
+            _uiState
+                .map { it.selectedAirport }
                 .filterNotNull()
                 .mapLatest { airport ->
+                    Log.w("MYLOGGER", "selectedAirport successfully changed!")
                     flightRepository.getDestinationsFrom(airport)
                 }
                 .flatMapLatest { it }
                 .collect { destinations ->
+                    val items = withContext(Dispatchers.IO) {
+                        destinations.map { dest ->
+                            FlightData(
+                                destination = dest,
+                                departure = _uiState.value.selectedAirport!!,
+                                isFavorite = flightRepository.isFlightFavorite(
+                                    _uiState.value.selectedAirport!!,
+                                    dest
+                                )!!
+                            )
+                        }
+                    }
                     _uiState.update {
                         it.copy(
-                            foundDestinations = destinations
+                            foundFlights = items
                         )
                     }
                 }
         }
 
-        viewModelScope.launch{
-            snapshotFlow { _uiState.value.selectedAirport }
+        viewModelScope.launch {
+            Log.w("MYLOGGER", "launched at 3 scope!")
+
+            //UPDATING FAVORITES EVERY TIME [_uiState.selectedAirport] IS NULL
+            _uiState
+                .map { it.selectedAirport }
                 .filter { it == null }
                 .flatMapLatest {
+                    Log.w("MYLOGGER", "selectedAirport is null!")
                     flightRepository.getFavoriteFlights()
                 }
                 .collect { favorites ->
                     val items = favorites.map { fav ->
                         FlightData(
                             departure = flightRepository.getAirportByIata(fav.departureCode)!!,
-                            destination = flightRepository.getAirportByIata(fav.destinationCode)!!
+                            destination = flightRepository.getAirportByIata(fav.destinationCode)!!,
+                            isFavorite = true
                         )
                     }
                     _uiState.update {
@@ -79,6 +112,8 @@ class MainViewModel(private val flightRepository: FlightRepository) : ViewModel(
                     }
                 }
         }
+
+        Log.w("MYLOGGER", "ViewModel initializing finished")
     }
 
     /**
@@ -86,13 +121,23 @@ class MainViewModel(private val flightRepository: FlightRepository) : ViewModel(
      */
     private fun loadSuggestions(query : String){
         viewModelScope.launch {
+            _uiState.update {
+                it.copy(
+                    isLoading = true
+                )
+            }
             flightRepository.searchAirports(query).collect{ airports ->
+                Log.w("MYLOGGER", "Loading suggestions...")
+                Log.w("MYLOGGER",airports.toString())
                 _uiState.update {
                     it.copy(
+                        selectedAirport = null,
                         suggestions = airports,
-                        isShowingSuggestions = airports.isNotEmpty()
+                        isShowingSuggestions = airports.isNotEmpty(),
+                        isLoading = false
                     )
                 }
+                Log.w("MYLOGGER", "Loading suggestions completed!")
             }
         }
     }
@@ -101,9 +146,11 @@ class MainViewModel(private val flightRepository: FlightRepository) : ViewModel(
      * Launching when search query changes, if query is empty, clears fields of [uiState]
      */
     fun onSearchQueryChange(query : String){
-        viewModelScope.launch {
-            _searchQuery.value = query
-            if (query.isBlank()){
+        _searchQuery.value = query
+        Log.w("MYLOGGER", "onSearchQueryChange run, current query = $query")
+        if (query.isBlank()){
+            Log.w("MYLOGGER", "search query is blank!")
+            viewModelScope.launch {
                 _uiState.update {
                     it.copy(
                         selectedAirport = null,
@@ -123,21 +170,22 @@ class MainViewModel(private val flightRepository: FlightRepository) : ViewModel(
 
     fun selectSuggestion(airport : AirportEntity){
         viewModelScope.launch {
+            Log.w("MYLOGGER", "Airport selected! current = $airport")
             _uiState.update {
                 it.copy(
-                    selectedAirport = airport
+                    selectedAirport = airport,
+                    isShowingSuggestions = false,
+                    suggestions = emptyList()
                 )
             }
-            _searchQuery.update {
-                airport.iataCode
-            }
+            _searchQuery.value = airport.iataCode
         }
     }
 
     /**
      * Toggles favorite of flight from selectedAirport to [fav]
      */
-    fun toggleFavorite(fav : AirportEntity){
+    fun toggleFavorite(fav : FlightData){
 
     }
 

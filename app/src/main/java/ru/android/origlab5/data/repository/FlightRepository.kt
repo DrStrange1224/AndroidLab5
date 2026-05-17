@@ -1,6 +1,8 @@
 package ru.android.origlab5.data.repository
 
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.withContext
 import ru.android.origlab5.data.FlightData
 import ru.android.origlab5.data.dao.AirportDao
 import ru.android.origlab5.data.dao.FavoriteDao
@@ -25,5 +27,9 @@ class FlightRepository(
 
     suspend fun getAirportByIata(iataCode : String) : AirportEntity?{
         return airportDao.getByIata(iataCode)
+    }
+
+    suspend fun isFlightFavorite(from : AirportEntity, to : AirportEntity) : Boolean?{
+        return (favoriteDao.getOne(from.iataCode, to.iataCode) != null)
     }
 }
