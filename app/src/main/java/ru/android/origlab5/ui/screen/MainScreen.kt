@@ -1,5 +1,6 @@
 package ru.android.origlab5.ui.screen
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.lazy.LazyColumn
@@ -13,9 +14,11 @@ import androidx.lifecycle.ViewModel
 import ru.android.origlab5.ui.viewmodel.MainViewModel
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
+import ru.android.origlab5.data.entity.AirportEntity
 import ru.android.origlab5.data.entity.FavoriteEntity
 
 @Composable
@@ -24,7 +27,9 @@ fun MainScreen(viewModel: MainViewModel) {
     val uiState by viewModel.uiState.collectAsState()
     val focusManager = LocalFocusManager.current
 
-    Column(){
+    Column(
+
+    ){
         //INPUT TEXT FIELD
         TextField(
             value = searchQuery,
@@ -36,38 +41,23 @@ fun MainScreen(viewModel: MainViewModel) {
             )
         )
 
-//        if (uiState.isShowingSuggestions){
-//            LazyColumn(
-//
-//            ) {
-//                items(uiState.suggestions){ airport ->
-//                    Button(
-//                        onClick = {
-//
-//                        }
-//                    ) {
-//                        Row(
-//
-//                        ) {
-//                            Text(
-//                                airport.iataCode
-//                            )
-//                            Text(
-//                                airport.name
-//                            )
-//                        }
-//                    }
-//                }
-//            }
-//        }
-
         //MAIN CONTENT
         when{
             //DATA LOADING
-            uiState.isLoading -> {}
+            uiState.isLoading -> {
+                Box(
+
+                ){
+                    CircularProgressIndicator()
+                }
+            }
 
             //ERROR MESSAGE
-            uiState.errorMessage != null -> {}
+            uiState.errorMessage != null -> {
+                Text(
+                    uiState.errorMessage!!
+                )
+            }
 
             //SUGGESTIONS
             uiState.isShowingSuggestions -> {
@@ -75,13 +65,28 @@ fun MainScreen(viewModel: MainViewModel) {
 
                 ) {
                     items(uiState.suggestions){ airport ->
-
+                        Suggestion(
+                            airport,
+                            onClick = { viewModel.selectSuggestion(airport) }
+                        )
                     }
                 }
             }
 
-            //WHEN DEPARTURE SELECTED
-            uiState.selectedDeparture != null -> {}
+            //WHEN AIRPORT SELECTED FROM SUGGESTIONS
+            uiState.selectedAirport != null -> {
+                LazyColumn(
+
+                ) {
+                    items(uiState.foundDestinations){ dest ->
+                        FlightBlock(
+                            departure = uiState.selectedAirport!!,
+                            destination = dest,
+                            onFavoriteToggle = { viewModel.toggleFavorite(dest) }
+                        )
+                    }
+                }
+            }
 
             //FAVORITES
             else -> {
@@ -89,9 +94,10 @@ fun MainScreen(viewModel: MainViewModel) {
 
                 ) {
                     items(uiState.favoriteFlights){ fav ->
-                        FavoriteBlock(
-                            fav=fav,
-                            viewModel = viewModel
+                        FlightBlock(
+                            departure = fav.departure,
+                            destination = fav.destination,
+                            onFavoriteToggle = { viewModel.removeFavorite(fav) }
                         )
                     }
                 }
@@ -101,9 +107,10 @@ fun MainScreen(viewModel: MainViewModel) {
 }
 
 @Composable
-fun FavoriteBlock(
-    fav : FavoriteEntity,
-    viewModel: MainViewModel
+fun FlightBlock(
+    departure : AirportEntity,
+    destination : AirportEntity,
+    onFavoriteToggle : () -> Unit
 ){
     Row(
 
@@ -119,10 +126,10 @@ fun FavoriteBlock(
 
             ){
                 Text(
-                    fav.departureCode
+                    departure.iataCode
                 )
                 Text(
-                    viewModel.getAirportNameByCode(fav.departureCode)
+                    departure.name
                 )
             }
 
@@ -133,19 +140,40 @@ fun FavoriteBlock(
 
             ){
                 Text(
-                    fav.destinationCode
+                    destination.iataCode
                 )
                 Text(
-                    viewModel.getAirportNameByCode(fav.destinationCode)
+                    destination.name
                 )
             }
         }
 
         //FAVORITE BUTTON
         IconButton(
-            onClick = { viewModel.removeFavorite(fav) }
+            onClick = onFavoriteToggle
         ){
             //TODO create favorite icon
+        }
+    }
+}
+
+@Composable
+fun Suggestion(
+    airport : AirportEntity,
+    onClick : () -> Unit
+){
+    Button(
+        onClick = {}
+    ){
+        Row(
+
+        ){
+            Text(
+                airport.iataCode
+            )
+            Text(
+                airport.name
+            )
         }
     }
 }
